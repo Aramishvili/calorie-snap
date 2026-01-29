@@ -60,6 +60,17 @@ Identify all visible foods and estimate their calories using ranges (not exact v
       }
     );
 
+    // Check if the Gemini API request was successful
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Gemini API HTTP Error:', response.status, errorData);
+      return res.status(500).json({ 
+        error: 'Gemini API request failed', 
+        status: response.status,
+        details: errorData 
+      });
+    }
+
     const data = await response.json();
     
     // Extract the text content from Gemini's response
