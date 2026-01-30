@@ -158,7 +158,63 @@ export default function App() {
       {error && <p style={{ color: 'red', marginTop: 10 }}>{error}</p>}
 
       {result && (
-        <pre style={{ marginTop: 20 }}>{JSON.stringify(result, null, 2)}</pre>
+        <div style={{ 
+          marginTop: 20, 
+          padding: 15, 
+          backgroundColor: '#f5f5f5', 
+          borderRadius: 8,
+          border: '1px solid #ddd'
+        }}>
+          <h3 style={{ marginTop: 0, color: '#333' }}>📊 Analysis Results</h3>
+          
+          {result.items && result.items.length > 0 ? (
+            <>
+              <div style={{ marginBottom: 15 }}>
+                {result.items.map((item, index) => (
+                  <div key={index} style={{ 
+                    marginBottom: 10, 
+                    padding: 10, 
+                    backgroundColor: 'white',
+                    borderRadius: 5,
+                    border: '1px solid #e0e0e0'
+                  }}>
+                    <div style={{ fontWeight: 'bold', fontSize: '16px', marginBottom: 5 }}>
+                      🍽️ {item.name}
+                    </div>
+                    <div style={{ fontSize: '14px', color: '#666', marginBottom: 3 }}>
+                      Portion: {item.portion}
+                    </div>
+                    <div style={{ fontSize: '14px', color: '#e67e22', fontWeight: 'bold' }}>
+                      Calories: {item.calories_range} kcal
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              <div style={{ 
+                padding: 12, 
+                backgroundColor: '#e8f5e9', 
+                borderRadius: 5,
+                border: '2px solid #4caf50',
+                marginBottom: 10
+              }}>
+                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#2e7d32' }}>
+                  🔥 Total Calories: {result.total_calories_range} kcal
+                </div>
+              </div>
+              
+              {result.confidence && (
+                <div style={{ fontSize: '12px', color: '#888', textAlign: 'center' }}>
+                  Confidence: {result.confidence}
+                </div>
+              )}
+            </>
+          ) : (
+            <div style={{ padding: 10, color: '#666' }}>
+              {result.raw_response || 'No food items detected in the image.'}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
