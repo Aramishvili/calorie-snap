@@ -111,7 +111,25 @@ export default function App() {
       }
 
       const data = await res.json();
-      setResult(data);
+      
+      // Handle potential JSON parsing errors from API
+      if (data.error && data.raw_response) {
+        // API couldn't parse the response as JSON, try parsing here
+        try {
+          const cleanedText = data.raw_response.replace(/```json\n?|\n?```/g, '').trim();
+          const parsedResult = JSON.parse(cleanedText);
+          setResult(parsedResult);
+        } catch {
+          // Still can't parse, show user-friendly error with raw text
+          setResult({ 
+            parse_error: true,
+            message: "The analysis completed but the response format was unexpected. Here's what was found:",
+            raw_text: data.raw_response 
+          });
+        }
+      } else {
+        setResult(data);
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -160,58 +178,161 @@ export default function App() {
       {result && (
         <div style={{ 
           marginTop: 20, 
-          padding: 15, 
-          backgroundColor: '#f5f5f5', 
-          borderRadius: 8,
-          border: '1px solid #ddd'
+          padding: 20, 
+          backgroundColor: '#f9f9f9', 
+          borderRadius: 12,
+          border: '2px solid #e0e0e0',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
         }}>
-          <h3 style={{ marginTop: 0, color: '#333' }}>📊 Analysis Results</h3>
+          <h3 style={{ 
+            marginTop: 0, 
+            marginBottom: 20,
+            color: '#2c3e50', 
+            fontSize: '22px',
+            borderBottom: '2px solid #3498db',
+            paddingBottom: 10
+          }}>
+            📊 Analysis Results
+          </h3>
           
-          {result.items && result.items.length > 0 ? (
+          {/* Handle parse errors */}
+          {result.parse_error ? (
+            <div style={{ 
+              padding: 15, 
+              backgroundColor: '#fff3cd', 
+              borderRadius: 8,
+              border: '1px solid #ffc107',
+              color: '#856404'
+            }}>
+              <div style={{ fontWeight: 'bold', marginBottom: 10, fontSize: '16px' }}>
+                ⚠️ {result.message || 'Unable to parse response'}
+              </div>
+              <div style={{ 
+                padding: 10, 
+                backgroundColor: 'white', 
+                borderRadius: 5,
+                fontSize: '14px',
+                lineHeight: '1.6',
+                maxHeight: '200px',
+                overflowY: 'auto',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word'
+              }}>
+                {result.raw_text}
+              </div>
+            </div>
+          ) : result.items && result.items.length > 0 ? (
             <>
-              <div style={{ marginBottom: 15 }}>
+              {/* Food items section */}
+              <div style={{ marginBottom: 20 }}>
                 {result.items.map((item, index) => (
                   <div key={index} style={{ 
-                    marginBottom: 10, 
-                    padding: 10, 
+                    marginBottom: 12, 
+                    padding: 15, 
                     backgroundColor: 'white',
-                    borderRadius: 5,
-                    border: '1px solid #e0e0e0'
+                    borderRadius: 8,
+                    border: '1px solid #e0e0e0',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
                   }}>
-                    <div style={{ fontWeight: 'bold', fontSize: '16px', marginBottom: 5 }}>
-                      🍽️ {item.name}
+                    <div style={{ 
+                      fontWeight: 'bold', 
+                      fontSize: '18px', 
+                      marginBottom: 8,
+                      color: '#2c3e50'
+                    }}>
+                      🍽️ {item.name || 'Unknown food'}
                     </div>
-                    <div style={{ fontSize: '14px', color: '#666', marginBottom: 3 }}>
-                      Portion: {item.portion}
+                    <div style={{ 
+                      fontSize: '14px', 
+                      color: '#7f8c8d', 
+                      marginBottom: 6,
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}>
+                      <span style={{ marginRight: 8 }}>📏</span>
+                      <span>Portion: {item.portion || 'Not specified'}</span>
                     </div>
-                    <div style={{ fontSize: '14px', color: '#e67e22', fontWeight: 'bold' }}>
-                      Calories: {item.calories_range} kcal
+                    <div style={{ 
+                      fontSize: '16px', 
+                      color: '#e67e22', 
+                      fontWeight: 'bold',
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}>
+                      <span style={{ marginRight: 8 }}>🔥</span>
+                      <span>Calories: {item.calories_range || 'N/A'} kcal</span>
                     </div>
                   </div>
                 ))}
               </div>
               
-              <div style={{ 
-                padding: 12, 
-                backgroundColor: '#e8f5e9', 
-                borderRadius: 5,
-                border: '2px solid #4caf50',
-                marginBottom: 10
-              }}>
-                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#2e7d32' }}>
-                  🔥 Total Calories: {result.total_calories_range} kcal
+              {/* Total calories summary */}
+              {result.total_calories_range && (
+                <div style={{ 
+                  padding: 16, 
+                  backgroundColor: '#e8f5e9', 
+                  borderRadius: 8,
+                  border: '2px solid #4caf50',
+                  marginBottom: 15,
+                  textAlign: 'center'
+                }}>
+                  <div style={{ 
+                    fontSize: '20px', 
+                    fontWeight: 'bold', 
+                    color: '#2e7d32',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <span style={{ marginRight: 8 }}>🔥</span>
+                    <span>Total Calories: {result.total_calories_range} kcal</span>
+                  </div>
                 </div>
-              </div>
+              )}
               
+              {/* Confidence indicator */}
               {result.confidence && (
-                <div style={{ fontSize: '12px', color: '#888', textAlign: 'center' }}>
-                  Confidence: {result.confidence}
+                <div style={{ 
+                  padding: 10,
+                  backgroundColor: '#f0f0f0',
+                  borderRadius: 6,
+                  textAlign: 'center'
+                }}>
+                  <span style={{ 
+                    fontSize: '13px', 
+                    color: '#555',
+                    fontWeight: '500'
+                  }}>
+                    {result.confidence.toLowerCase() === 'high' && '✅ High Confidence'}
+                    {result.confidence.toLowerCase() === 'medium' && '⚡ Medium Confidence'}
+                    {result.confidence.toLowerCase() === 'low' && '⚠️ Low Confidence'}
+                    {!['high', 'medium', 'low'].includes(result.confidence.toLowerCase()) && `Confidence: ${result.confidence}`}
+                  </span>
                 </div>
               )}
             </>
           ) : (
-            <div style={{ padding: 10, color: '#666' }}>
-              {result.raw_response || 'No food items detected in the image.'}
+            /* No food items detected */
+            <div style={{ 
+              padding: 20, 
+              backgroundColor: '#f8f9fa',
+              borderRadius: 8,
+              border: '1px solid #dee2e6',
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '48px', marginBottom: 10 }}>🔍</div>
+              <div style={{ 
+                fontSize: '16px', 
+                color: '#6c757d',
+                fontWeight: '500',
+                marginBottom: 8
+              }}>
+                No food items detected
+              </div>
+              <div style={{ fontSize: '14px', color: '#868e96', lineHeight: '1.5' }}>
+                {result.raw_response || result.raw_text || 
+                 'Try uploading a clearer image with visible food items.'}
+              </div>
             </div>
           )}
         </div>
